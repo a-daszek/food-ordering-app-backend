@@ -1,12 +1,24 @@
 import Stripe from "stripe";
 import e, { Request, Response } from "express";
 import Restaurant, { MenuItemType } from "../models/restaurant";
-import { StringExpressionOperator } from "mongoose";
 import Order from "../models/order";
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string);
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 const STRIPE_ENDPOINT_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string;
+
+const getMyOrders = async (req: Request, res: Response) => {
+  try {
+    const orders = await Order.find({ user: req.userId })
+      .populate("restaurant")
+      .populate("user");
+
+    res.json(orders);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Coś poszło nie tak" });
+  }
+};
 
 type CheckoutSessionRequest = {
   cartItems: {
@@ -172,4 +184,5 @@ const createSession = async (
 export default {
   createCheckoutSession,
   stripeWebhookHandler,
+  getMyOrders,
 };
